@@ -1,37 +1,54 @@
+```groovy
 pipeline {
-        agent any
+    agent any
 
-        stages {
-            stage('Build') {
-                steps {
-                    echo 'Compilando / preparando entorno...'
-                }
-            }
-       
-            stage('Test') { 
-                steps {
-                    sh 'pipenv run pytest || echo "Sin tests definidos"'
-                }
-            }
+    stages {
 
-            stage('Analyze') {
-                steps {
-                    echo 'Análisis de calidad de código (puede integrarse con SonarQube aquí)'
-                }
+        stage('Build') {
+            steps {
+                echo 'Compilando / preparando entorno...'
+                bat 'python --version'
+                bat 'pipenv --version'
             }
+        }
 
-            stage('Dependency Management') {
-                steps {
-                    sh 'pipenv install'
-                    sh 'pipenv update'
-                    sh 'pipenv graph'
-                }
-            }
+        stage('Test') {
+            steps {
+                script {
+                    int resultado = bat(
+                        script: 'pipenv run pytest',
+                        returnStatus: true
+                    )
 
-            stage('Deploy') {
-                steps {
-                    echo 'Desplegando aplicación en entorno de prueba (simulado)...'
+                    if (resultado == 0) {
+                        echo 'Pruebas ejecutadas correctamente.'
+                    } else {
+                        error "Las pruebas fallaron o no pudieron ejecutarse. Código de salida: ${resultado}"
+                    }
                 }
             }
         }
+
+        stage('Analyze') {
+            steps {
+                echo 'Etapa de análisis de calidad de código.'
+                echo 'La integración real con SonarQube debe configurarse por separado.'
+            }
+        }
+
+        stage('Dependency Management') {
+            steps {
+                bat 'pipenv install'
+                bat 'pipenv graph'
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                echo 'Despliegue simulado en entorno de prueba.'
+            }
+        }
+
     }
+}
+```
